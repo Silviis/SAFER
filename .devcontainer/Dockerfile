@@ -1,5 +1,4 @@
 FROM osrf/ros:humble-desktop-full
-ENV WORKSPACE=${WORKSPACE}
 ENV USERNAME=ros
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -58,7 +57,7 @@ RUN python3 -m pip install --no-cache-dir setuptools==58.2.0 "numpy<2.0"
 
 # -------------------- ROS setup ---------------------
 RUN echo "source /opt/ros/humble/setup.bash" >> /home/ros/.bashrc
-RUN echo '[ -f ${WORKSPACE}/install/setup.bash ] && source ${WORKSPACE}/install/setup.bash]' >> /home/${USERNAME}/.bashrc
+RUN echo "source /workspaces/SAFER/install/setup.bash" >> /home/ros/.bashrc
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
    ros-humble-cv-bridge \
