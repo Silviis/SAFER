@@ -19,6 +19,7 @@
 		// uncomment to use intel iGPU
 		"--device=/dev/dri"
 	],
+	"postCreateCommand": ".devcontainer/postcreate.sh",
 	"containerEnv": {
 		"DISPLAY": "${localEnv:DISPLAY}", // Needed for GUI try ":0" for windows
 		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
