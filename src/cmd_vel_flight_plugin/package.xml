@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>cmd_vel_flight_plugin</name>
+  <version>0.1.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="eetu.silvennoinen@gmail.com">Eetu Silvennoinen</maintainer>
+  <license>TODO: License declaration</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>gz-sim</depend>
+  <depend>gz-plugin</depend>
+  <depend>gz-transport</depend>
+  <depend>gz-msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
