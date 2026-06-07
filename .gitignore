@@ -220,3 +220,6 @@ __marimo__/
 # Ignore colcon generated folders
 install/
 log/
+
+# vscode
+.vscode/
