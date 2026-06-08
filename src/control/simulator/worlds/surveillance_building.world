@@ -1,0 +1,300 @@
+<?xml version="1.0" ?>
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  SURVEILLANCE BUILDING — Hackathon Simulation World             ║
+  ║  Format  : SDF 1.6  (Gazebo Classic & Ignition compatible)      ║
+  ║                                                                  ║
+  ║  Building : 5.0 m × 5.0 m × 3.0 m  (external)                  ║
+  ║  Walls    : 0.2 m thick                                          ║
+  ║  Windows  : 1.5 m wide × 1.2 m tall, centred on every wall      ║
+  ║             Sill at z = 1.0 m  |  Lintel at z = 2.2 m           ║
+  ║  Roof     : Open  (drone entry from above)                       ║
+  ║                                                                  ║
+  ║  Load in Gazebo Classic:                                         ║
+  ║    gazebo surveillance_building.world                            ║
+  ║  Load with ROS 2 / Gazebo Sim:                                   ║
+  ║    ros2 launch control simulation.launch.py                      ║
+  ║      world:=<path>/surveillance_building.world                   ║
+  ╚══════════════════════════════════════════════════════════════════╝
+
+  Wall decomposition (each wall = 4 box segments around a hole):
+
+         ┌─────────┬─────────────┬─────────┐  z = 3.0
+         │col_left │   top_panel │col_right│  z = 2.2
+         │         ├─────────────┤         │
+         │         │  W I N D O W│         │  1.2 m gap
+         │         ├─────────────┤         │
+         │         │  bot_panel  │         │  z = 1.0
+         └─────────┴─────────────┴─────────┘  z = 0.0
+          1.75 m       1.5 m        1.75 m
+-->
+<sdf version="1.6">
+  <world name="surveillance_building">
+
+    <!-- ── Physics ─────────────────────────────────────────────── -->
+    <physics name="default" default="true" type="ode">
+      <max_step_size>0.002</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>500</real_time_update_rate>
+    </physics>
+
+    <plugin
+      filename="gz-sim-physics-system"
+      name="gz::sim::systems::Physics">
+    </plugin>
+
+    <plugin
+      filename="gz-sim-sensors-system"
+      name="gz::sim::systems::Sensors">
+    </plugin>
+
+    <plugin
+      filename="gz-sim-scene-broadcaster-system"
+      name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+
+    <plugin
+      filename="gz-sim-user-commands-system"
+      name="gz::sim::systems::UserCommands">
+    </plugin>
+
+    <!-- ── Scene ──────────────────────────────────────────────── -->
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.7 0.8 0.9 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- ── Sun ────────────────────────────────────────────────── -->
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- ── Ground Plane ───────────────────────────────────────── -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>50 50</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>50 50</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.75 0.75 0.75 1</ambient>
+            <diffuse>0.75 0.75 0.75 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+
+    <!-- ════════════════════════════════════════════════════════════
+         SURVEILLANCE BUILDING
+         Centre of building at world origin (0, 0, 0).
+         All wall positions given as centre of each box link.
+         ════════════════════════════════════════════════════════════ -->
+    <model name="surveillance_building">
+      <static>true</static>
+      <pose>0 0 0 0 0 0</pose>
+
+      <!-- ── Floor ──────────────────────────────────────────────
+           5.0 × 5.0 m slab, 0.1 m thick. Top face at z = 0.1.
+           ─────────────────────────────────────────────────────── -->
+      <link name="floor">
+        <pose>0 0 0.05 0 0 0</pose>
+        <collision name="c">
+          <geometry><box><size>5.0 5.0 0.1</size></box></geometry>
+        </collision>
+        <visual name="v">
+          <geometry><box><size>5.0 5.0 0.1</size></box></geometry>
+          <material>
+            <ambient>0.50 0.50 0.50 1</ambient>
+            <diffuse>0.50 0.50 0.50 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+
+      <!-- ══ NORTH WALL  (y = +2.4, outer face at y = +2.5) ══
+           Runs along X-axis.
+           ─────────────────────────────────────────────────────── -->
+
+      <!-- Left column  x ∈ [−2.50, −0.75]  full height -->
+      <link name="n_col_l">
+        <pose>-1.625 2.4 1.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.75 0.2 3.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.75 0.2 3.0</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+
+      <!-- Right column  x ∈ [+0.75, +2.50]  full height -->
+      <link name="n_col_r">
+        <pose>1.625 2.4 1.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.75 0.2 3.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.75 0.2 3.0</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+
+      <!-- Bottom panel  x ∈ [−0.75, +0.75]  z ∈ [0.0, 1.0]  (sill) -->
+      <link name="n_bot">
+        <pose>0 2.4 0.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.5 0.2 1.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.5 0.2 1.0</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+
+      <!-- Top panel  x ∈ [−0.75, +0.75]  z ∈ [2.2, 3.0]  (lintel) -->
+      <link name="n_top">
+        <pose>0 2.4 2.6 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.5 0.2 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.5 0.2 0.8</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+
+
+      <!-- ══ SOUTH WALL  (y = −2.4, outer face at y = −2.5) ══ -->
+
+      <link name="s_col_l">
+        <pose>-1.625 -2.4 1.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.75 0.2 3.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.75 0.2 3.0</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="s_col_r">
+        <pose>1.625 -2.4 1.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.75 0.2 3.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.75 0.2 3.0</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="s_bot">
+        <pose>0 -2.4 0.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.5 0.2 1.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.5 0.2 1.0</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="s_top">
+        <pose>0 -2.4 2.6 0 0 0</pose>
+        <collision name="c"><geometry><box><size>1.5 0.2 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>1.5 0.2 0.8</size></box></geometry>
+          <material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material>
+        </visual>
+      </link>
+
+
+      <!-- ══ EAST WALL  (x = +2.4, outer face at x = +2.5) ══
+           Runs along Y-axis.  Size swaps x↔y vs N/S walls.
+           ─────────────────────────────────────────────────────── -->
+
+      <link name="e_col_l">
+        <pose>2.4 -1.625 1.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 1.75 3.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 1.75 3.0</size></box></geometry>
+          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="e_col_r">
+        <pose>2.4 1.625 1.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 1.75 3.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 1.75 3.0</size></box></geometry>
+          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="e_bot">
+        <pose>2.4 0 0.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 1.5 1.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 1.5 1.0</size></box></geometry>
+          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="e_top">
+        <pose>2.4 0 2.6 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 1.5 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 1.5 0.8</size></box></geometry>
+          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
+        </visual>
+      </link>
+
+
+      <!-- ══ WEST WALL  (x = −2.4, outer face at x = −2.5) ══ -->
+
+      <link name="w_col_l">
+        <pose>-2.4 -1.625 1.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 1.75 3.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 1.75 3.0</size></box></geometry>
+          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="w_col_r">
+        <pose>-2.4 1.625 1.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 1.75 3.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 1.75 3.0</size></box></geometry>
+          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="w_bot">
+        <pose>-2.4 0 0.5 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 1.5 1.0</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 1.5 1.0</size></box></geometry>
+          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
+        </visual>
+      </link>
+
+      <link name="w_top">
+        <pose>-2.4 0 2.6 0 0 0</pose>
+        <collision name="c"><geometry><box><size>0.2 1.5 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>0.2 1.5 0.8</size></box></geometry>
+          <material><ambient>0.80 0.80 0.80 1</ambient><diffuse>0.80 0.80 0.80 1</diffuse></material>
+        </visual>
+      </link>
+
+    </model>
+    <!-- end surveillance_building -->
+
+  </world>
+</sdf>

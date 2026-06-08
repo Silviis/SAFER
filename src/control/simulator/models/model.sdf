@@ -1,0 +1,161 @@
+<?xml version="1.0" ?>
+<!--
+  Parrot Anafi 4K — Gazebo SDF model
+  ═══════════════════════════════════
+  Visual approximation of the Anafi body (~175 × 240 mm folded).
+
+  Camera convention (SDF):
+    Sensor looks along +X of its local pose frame.
+    Spawning the drone with yaw = π/2 (facing +Y / north) means
+    the camera naturally looks toward the building south wall.
+
+  Gravity is disabled on base_link so the drone hovers at spawn height.
+  Use /gazebo/set_entity_state to reposition during testing.
+-->
+<sdf version="1.6">
+  <model name="anafi4k">
+
+    <static>false</static>
+    <linear_damping>0.5</linear_damping>
+    <angular_damping>0.5</angular_damping>
+
+    <plugin filename="libCmdVelFlightPlugin.so" name="CmdVelFlightPlugin"/>
+    <link name="base_link">
+
+      <!-- Hover at spawn height — no physics needed for CV testing -->
+      <gravity>true</gravity>
+      <self_collide>false</self_collide>
+
+      <!-- ── Inertia (real Anafi 4K: 320 g) ──────────────────────── -->
+      <inertial>
+        <mass>0.320</mass>
+        <inertia>
+          <ixx>0.0035</ixx> <ixy>0.0</ixy> <ixz>0.0</ixz>
+                            <iyy>0.0035</iyy> <iyz>0.0</iyz>
+                                              <izz>0.0060</izz>
+        </inertia>
+      </inertial>
+
+      <!-- ── Collision hull ───────────────────────────────────────── -->
+      <collision name="body_col">
+        <geometry><box><size>0.30 0.30 0.08</size></box></geometry>
+      </collision>
+
+      <!-- ══════════════ VISUALS ══════════════════════════════════ -->
+
+      <!-- Central body -->
+      <visual name="body">
+        <geometry><box><size>0.24 0.18 0.055</size></box></geometry>
+        <material>
+          <ambient>0.12 0.12 0.12 1</ambient>
+          <diffuse>0.12 0.12 0.12 1</diffuse>
+          <specular>0.40 0.40 0.40 1</specular>
+          <emissive>0 0 0 0</emissive>
+        </material>
+      </visual>
+
+      <!-- Arm stubs (4×) — thin boxes extending to rotor positions -->
+      <visual name="arm_fl">
+        <pose>0.09 0.09 0.01 0 0 0.785</pose>
+        <geometry><box><size>0.13 0.025 0.012</size></box></geometry>
+        <material><ambient>0.18 0.18 0.18 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse></material>
+      </visual>
+      <visual name="arm_fr">
+        <pose>0.09 -0.09 0.01 0 0 -0.785</pose>
+        <geometry><box><size>0.13 0.025 0.012</size></box></geometry>
+        <material><ambient>0.18 0.18 0.18 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse></material>
+      </visual>
+      <visual name="arm_rl">
+        <pose>-0.09 0.09 0.01 0 0 -0.785</pose>
+        <geometry><box><size>0.13 0.025 0.012</size></box></geometry>
+        <material><ambient>0.18 0.18 0.18 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse></material>
+      </visual>
+      <visual name="arm_rr">
+        <pose>-0.09 -0.09 0.01 0 0 0.785</pose>
+        <geometry><box><size>0.13 0.025 0.012</size></box></geometry>
+        <material><ambient>0.18 0.18 0.18 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse></material>
+      </visual>
+
+      <!-- Rotor discs (4×) — flat cylinders at arm tips -->
+      <visual name="rotor_fl">
+        <pose>0.135 0.135 0.038 0 0 0</pose>
+        <geometry><cylinder><radius>0.082</radius><length>0.004</length></cylinder></geometry>
+        <material><ambient>0.30 0.30 0.30 0.75</ambient><diffuse>0.30 0.30 0.30 0.75</diffuse></material>
+      </visual>
+      <visual name="rotor_fr">
+        <pose>0.135 -0.135 0.038 0 0 0</pose>
+        <geometry><cylinder><radius>0.082</radius><length>0.004</length></cylinder></geometry>
+        <material><ambient>0.30 0.30 0.30 0.75</ambient><diffuse>0.30 0.30 0.30 0.75</diffuse></material>
+      </visual>
+      <visual name="rotor_rl">
+        <pose>-0.135 0.135 0.038 0 0 0</pose>
+        <geometry><cylinder><radius>0.082</radius><length>0.004</length></cylinder></geometry>
+        <material><ambient>0.30 0.30 0.30 0.75</ambient><diffuse>0.30 0.30 0.30 0.75</diffuse></material>
+      </visual>
+      <visual name="rotor_rr">
+        <pose>-0.135 -0.135 0.038 0 0 0</pose>
+        <geometry><cylinder><radius>0.082</radius><length>0.004</length></cylinder></geometry>
+        <material><ambient>0.30 0.30 0.30 0.75</ambient><diffuse>0.30 0.30 0.30 0.75</diffuse></material>
+      </visual>
+
+      <!-- Camera gimbal pod (front-bottom, Anafi-style ball mount) -->
+      <visual name="gimbal_pod">
+        <pose>0.115 0 -0.032 0 0 0</pose>
+        <geometry><sphere><radius>0.018</radius></sphere></geometry>
+        <material>
+          <ambient>0.05 0.05 0.05 1</ambient>
+          <diffuse>0.05 0.05 0.05 1</diffuse>
+          <specular>0.50 0.50 0.50 1</specular>
+        </material>
+      </visual>
+
+      <!-- LED strip (front edge) for orientation cue in Gazebo view -->
+      <visual name="front_led">
+        <pose>0.122 0 0.005 0 0 0</pose>
+        <geometry><box><size>0.005 0.06 0.005</size></box></geometry>
+        <material><ambient>0.0 0.5 1.0 1</ambient><emissive>0.0 0.4 0.8 1</emissive></material>
+      </visual>
+
+      <!-- ══════════════ CAMERA SENSOR ════════════════════════════
+           Position: front of body (+X), slightly below centre (-Z)
+           Orientation: 0 tilt → looks along base_link +X axis.
+
+           Drone spawned with yaw=π/2 → base_link +X aligns with
+           world +Y (north) → camera faces the building. ✓
+
+           Approximate Anafi 4K specs:
+             Horizontal FOV  : 75°  (1.309 rad)
+             Resolution (sim): 1280 × 720  (real: 3840 × 2160)
+             Update rate     : 30 Hz
+
+           Published topics:
+             /anafi/image          sensor_msgs/Image
+             /anafi/camera_info    sensor_msgs/CameraInfo
+      ═══════════════════════════════════════════════════════════ -->
+      <sensor name="anafi_camera" type="camera">
+        <pose>0.13 0 -0.025 0 0 0</pose>
+        <camera name="anafi_camera">
+          <horizontal_fov>1.309</horizontal_fov>
+          <image>
+            <width>1280</width>
+            <height>720</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.10</near>
+            <far>100.0</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.004</stddev>
+          </noise>
+        </camera>
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+        <visualize>false</visualize>  <!-- set true to see frustum in Gazebo -->
+      </sensor>
+
+    </link>  <!-- end base_link -->
+  </model>
+</sdf>

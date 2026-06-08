@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  SURVEILLANCE BUILDING — Parrot Sphinx World                    ║
+  ║  Format : .fwx  (Parrot Sphinx / Unreal Engine 4)               ║
+  ║                                                                  ║
+  ║  NOTE: Sphinx does NOT support custom SDF/mesh geometry          ║
+  ║  natively. This file spawns the Anafi in a built-in             ║
+  ║  Sphinx environment.                                             ║
+  ║                                                                  ║
+  ║  For a custom building you have two options:                     ║
+  ║    A) Use Gazebo world (surveillance_building.world) instead     ║
+  ║    B) Build a UE4 level with Parrot Unreal Plugin, then          ║
+  ║       reference it as the world= below                           ║
+  ║                                                                  ║
+  ║  Usage:                                                          ║
+  ║    sphinx surveillance_building.fwx                              ║
+  ║                                                                  ║
+  ║  Built-in worlds shipped with Sphinx:                            ║
+  ║    empty   — flat ground, no obstacles (recommended for CV dev)  ║
+  ║    outdoor — open field                                          ║
+  ║    indoor  — indoor hall                                         ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+<fwx_scenario version="1.0">
+
+  <!--
+    Spawn the Anafi 4K 3 m south of the building centre.
+    Drone starts on the ground (z = 0.15 ≈ landing gear height).
+
+    Coordinate convention matches the SDF world:
+      +X = East, +Y = North, +Z = Up
+  -->
+  <section world="/opt/parrot-sphinx/usr/share/sphinx/worlds/empty.world">
+
+    <actor name="anafi4k">
+      <drone_type>anafi4k</drone_type>
+
+      <!-- Spawn point: 3 m south of building, facing north (yaw = 90°) -->
+      <position> 0 -3 0.15 </position>
+      <rotation> 0 0 0 1 </rotation>   <!-- quaternion x y z w -->
+
+      <!-- Disable GPS (indoor/no-GPS mission) -->
+      <disable_gps>1</disable_gps>
+
+      <!--
+        Uncomment to connect Olympe on the default port:
+        <connection>tcp://10.202.0.1:44444</connection>
+      -->
+    </actor>
+
+  </section>
+
+</fwx_scenario>
