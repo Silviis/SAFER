@@ -4,6 +4,8 @@ import math
 from enum import Enum, auto
 
 import numpy as np
+import signal
+
 
 import rclpy
 from rclpy.node import Node
@@ -52,8 +54,8 @@ class ErgodicInspectionNode(Node):
         self.declare_parameter("land_service", "/anafi/drone/land")
         self.declare_parameter("velocity_command_frame", "body")
 
-        self.declare_parameter("takeoff_altitude", 2.5)
-        self.declare_parameter("inspection_distance", 24.0)
+        self.declare_parameter("takeoff_altitude", 1.5)
+        self.declare_parameter("inspection_distance", 0.48)
         self.declare_parameter("search_duration", 20.0)
 
         self.declare_parameter("area_width", 2.0)
@@ -71,7 +73,7 @@ class ErgodicInspectionNode(Node):
         self.declare_parameter("kp_boundary", 0.8)
         self.declare_parameter("lock_start_yaw", True)
 
-        self.declare_parameter("home_tolerance", 0.35)
+        self.declare_parameter("home_tolerance", 0.15)
         self.declare_parameter("center_tolerance", 0.35)
         self.declare_parameter("altitude_tolerance", 0.15)
 
@@ -172,6 +174,8 @@ class ErgodicInspectionNode(Node):
         self.trajectory_points = []
 
         self.timer = self.create_timer(0.1, self.run_fsm_timer)
+        signal.signal(signal.SIGINT, self.signal_handler)
+        
 
         self.get_logger().info("Ergodic inspection node started.")
 
@@ -582,6 +586,22 @@ class ErgodicInspectionNode(Node):
         self.land_client.call_async(Trigger.Request())
         self.land_sent = True
         self.get_logger().info("Land command sent.")
+    
+    # ---------------- SHUTDOWN ----------------
+    def signal_handler(self, sig, frame): 
+            print('You pressed Ctrl+C. Turning off the controller.')
+            # Stop all robots at the end
+            self.land_client.call_async(Trigger.Request())
+            self.stop = True
+
+            exit()  # Force Exit
+
+    def publish_zero(self):
+        cmd = VelocityCommand()
+        cmd.vx = cmd.vy = cmd.vz = 0.0
+        cmd.yaw_rate = 0.0
+        self.vel_pub.publish(cmd)
+
 
     def publish_markers(self):
         if self.center_x is None or self.center_y is None:
@@ -668,7 +688,7 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        node.publish_velocity(0.0, 0.0, 0.0, 0.0)
+        node.publish_zero()
         node.destroy_node()
         rclpy.shutdown()
 
