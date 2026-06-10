@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'person_fire_detector = vision.person_fire_detector:main',
+            'person_fire_update = vision.person_fire_update:main'
         ],
     },
 )
