@@ -21,6 +21,7 @@
   <depend>gazebo_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tf_transformations</depend>
+  <exec_depend>anafi_autonomy</exec_depend>
   <depend>python3-pip</depend>
   <depend>python3-qpsolvers-pip</depend>
 

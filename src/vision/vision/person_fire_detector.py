@@ -1,3 +1,12 @@
+import rclpy
+from rclpy.node import Node
+
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
+import cv2
+from ultralytics import YOLO
+
 """Real-time fire and human detection using webcam.
 
 Controls:
@@ -9,7 +18,6 @@ Notes:
 - Detections are merged into one tracking pipeline.
 """
 
-import cv2
 import math
 import os
 from ultralytics import YOLO
@@ -155,12 +163,12 @@ def get_confirmation_frames(class_name):
 
 def detect_objects(frame, model, valid_class_names, confidence):
     detections = []
-
     results = model.predict(
         frame,
         conf=confidence,
         iou=YOLO_IOU,
         imgsz=YOLO_IMAGE_SIZE,
+        device="cpu",
         verbose=False,
     )
 
@@ -491,40 +499,112 @@ def open_video_capture(source):
 
     return cap
 
+def process_frame(frame, fire_model, person_model, tracks, next_track_id):
+    detections = detect_fire_and_person(frame, fire_model, person_model)
 
-def main():
-    if not os.path.exists(FIRE_MODEL_PATH):
-        raise RuntimeError(
-            f"Fire model not found: {FIRE_MODEL_PATH}\n"
-            "Please put your trained fire model at models/fire_best.pt"
+    active_tracks, tracks, next_track_id = update_tracks(
+        detections, tracks, next_track_id,
+    )
+
+    fire_count, person_count = draw_tracks(frame, active_tracks)
+
+    interactions = find_fire_person_interactions(active_tracks)
+    draw_interactions(frame, active_tracks, interactions)
+
+    draw_status_bar(frame, fire_count, person_count, len(interactions))
+
+    return frame, tracks, next_track_id, fire_count, person_count
+
+
+class FirePersonDetectorNode(Node):
+
+    def __init__(self):
+        super().__init__("fire_person_detector")
+
+        self.bridge = CvBridge()
+
+        self.fire_model = YOLO("/home/localadmin/SAFER/best.pt")
+        self.person_model = YOLO("/home/localadmin/SAFER/yolo11n.pt")
+
+
+        self.fire_model.to("cpu")
+        self.person_model.to("cpu")
+
+        self.tracks = {}
+        self.next_track_id = 1
+
+        self.subscription = self.create_subscription(
+            Image,
+            "/anafi/camera/image",
+            self.image_callback,
+            10,
+        )
+        self.image_pub = self.create_publisher(
+            Image,
+            "/vision/fire_person/image",
+            10,
         )
 
-    fire_model = YOLO(FIRE_MODEL_PATH)
-    person_model = YOLO(PERSON_MODEL_PATH)
+        self.get_logger().info(
+            "Subscribed to /anafi/camera/image"
+        )
 
-    cap = open_video_capture(INPUT_SOURCE)
 
-    tracks = {}
-    next_track_id = 1
+    def image_callback(self, msg):
+        try:
+            frame = self.bridge.imgmsg_to_cv2(
+                msg,
+                desired_encoding="bgr8"
+            )
+        except Exception as exc:
+            self.get_logger().error(
+                f"Image conversion failed: {exc}"
+            )
+            return
+
+        (
+            frame,
+            self.tracks,
+            self.next_track_id,
+            fire_count,
+            person_count,
+        ) = process_frame(
+            frame,
+            self.fire_model,
+            self.person_model,
+            self.tracks,
+            self.next_track_id,
+        )
+
+        try:
+            output_msg = self.bridge.cv2_to_imgmsg(
+                frame,
+                encoding="bgr8"
+            )
+
+            output_msg.header = msg.header
+
+            self.image_pub.publish(output_msg)
+
+        except Exception as exc:
+            self.get_logger().error(
+                f"Image publish failed: {exc}"
+            )
+
+def main():
+    rclpy.init()
+
+    node = FirePersonDetectorNode()
 
     try:
-        while True:
-            ok, frame = cap.read()
-            if not ok:
-                break
-
-            frame, tracks, next_track_id, fire_count, person_count = process_frame(
-                frame, fire_model, person_model, tracks, next_track_id)
-
-            cv2.imshow("Fire and Human Detector", frame)
-
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
-
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
     finally:
-        cap.release()
-        cv2.destroyAllWindows()
+        node.destroy_node()
+
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

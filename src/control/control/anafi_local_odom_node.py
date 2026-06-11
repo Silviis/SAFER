@@ -24,7 +24,7 @@ class AnafiLocalOdomNode(Node):
         # Parameters.
         self.declare_parameter('attitude_topic', '/anafi/drone/attitude')
         self.declare_parameter('speed_topic', '/anafi/drone/speed')
-        self.declare_parameter('altitude_topic', '/anafi/drone/altitude')
+        self.declare_parameter('altitude_topic', '/anafi/drone/altitude_above_to')
         self.declare_parameter('odom_topic', '/safer/localization/odom')
 
         self.declare_parameter('local_frame_id', 'anafi_local')
@@ -134,11 +134,11 @@ class AnafiLocalOdomNode(Node):
 
     def odom_loop(self):
         if self.latest_attitude is None:
-            self.get_logger().info("Waiting for ANAFI attitude...")
+            self.get_logger().info("Waiting for ANAFI attitude...", throttle_duration_sec=2.0)
             return
 
         if self.latest_speed is None:
-            self.get_logger().info("Waiting for ANAFI speed...")
+            self.get_logger().info("Waiting for ANAFI speed...", throttle_duration_sec=2.0)
             return
 
         now = self.get_clock().now()

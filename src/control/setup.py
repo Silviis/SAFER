@@ -10,7 +10,10 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/sim.launch.py']),
+        ('share/' + package_name + '/launch', [
+            'launch/anafi.launch.py',
+            'launch/sim.launch.py',
+        ]),
         ('share/' + package_name + '/simulator/worlds', ['simulator/worlds/surveillance_building.world']),
         ('share/' + package_name + '/simulator/models', ['simulator/models/model.sdf']),
         ('share/' + package_name + '/simulator/models', ['simulator/models/model.config']),
@@ -31,6 +34,9 @@ setup(
         'console_scripts': [
             'gazebo_pose_to_odom = control.gazebo_pose_to_odom:main',
             'cbf_node = control.cbf_node:main',
+            'anafi_local_odom_node = control.anafi_local_odom_node:main',
+            'anafi_control_node = control.anafi_control_node:main',
+            'ergodic_inspection_node = control.ergodic_inspection_node:main'
         ],
     },
 )
